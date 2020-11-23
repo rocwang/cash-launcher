@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
+    "prettier": "^2.2.0",
     "vue": "^3.0.0"
   },
   "devDependencies": {
@@ -38,7 +39,11 @@
     "parserOptions": {
       "parser": "@typescript-eslint/parser"
     },
-    "rules": {}
+    "rules": {
+      "no-undef"                         : "off",
+      "no-unused-vars"                   : "off",
+      "@typescript-eslint/no-unused-vars": "error"
+    }
   },
   "browserslist": [
     "> 1%",
