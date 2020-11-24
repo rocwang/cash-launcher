@@ -79,6 +79,7 @@ export default defineComponent({
     onMounted(() => {
       if (root.value) {
         root.value.addEventListener("touchstart", ((e: TouchEvent) => {
+          e.preventDefault();
           const target = transforms.value.find(
             ({ state }) => state === "start"
           );
@@ -89,13 +90,15 @@ export default defineComponent({
         }) as EventListener);
 
         root.value.addEventListener("touchmove", ((e: TouchEvent) => {
+          e.preventDefault();
           const target = transforms.value.find(({ state }) => state === "move");
           if (target) {
             target.clientY = e.touches[0].clientY;
           }
         }) as EventListener);
 
-        root.value.addEventListener("touchend", (() => {
+        root.value.addEventListener("touchend", ((e: TouchEvent) => {
+          e.preventDefault();
           const target = transforms.value.find(({ state }) => state === "move");
           if (target) {
             target.clientY = window.innerHeight * -1.2;
@@ -109,7 +112,8 @@ export default defineComponent({
           }
         }) as EventListener);
 
-        root.value.addEventListener("touchcancel", (() => {
+        root.value.addEventListener("touchcancel", ((e: TouchEvent) => {
+          e.preventDefault();
           const target = transforms.value.find(({ state }) => state === "move");
           if (target) {
             target.clientYStart = 0;
