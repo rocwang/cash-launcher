@@ -10,7 +10,10 @@
       />
     </router-link>
 
-    <router-link to="/stack/red-envelope" :class="[$style.container, $style.bgRedEnvelope]">
+    <router-link
+      to="/stack/red-envelope"
+      :class="[$style.container, $style.bgRedEnvelope]"
+    >
       <Paper
         :class="$style.redEnvelope"
         v-for="(style, i) in redEnvelopeStyles"
@@ -66,7 +69,7 @@ export default defineComponent({
       });
     }
 
-    const numberOfItem = 100;
+    const numberOfItem = 20;
     const banknoteStyles = ref<Style[]>([]);
     const redEnvelopeStyles = ref<Style[]>([]);
     const observer = new ResizeObserver((entries) => {

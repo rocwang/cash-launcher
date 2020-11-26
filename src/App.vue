@@ -1,17 +1,17 @@
 <template>
-  <Head />
+  <HtmlHead />
 
   <router-view />
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import Head from "./components/Head.vue";
+import HtmlHead from "./components/HtmlHead.vue";
 
 export default defineComponent({
   name: "App",
   components: {
-    Head,
+    HtmlHead,
   },
 });
 </script>
