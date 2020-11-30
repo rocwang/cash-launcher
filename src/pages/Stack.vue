@@ -7,9 +7,19 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, onMounted, PropType, ref } from "vue";
-import cnyFrontPortrait from "@/assets/cny-front-portrait.webp";
-import redEnvelope from "@/assets/red-envelope.svg";
+import {
+  PropType,
+  computed,
+  defineComponent,
+  onMounted,
+  watch,
+  ref,
+} from "vue";
+import cny from "@/assets/cny-portrait.webp";
+import gbp from "@/assets/gbp-portrait.webp";
+import nzd from "@/assets/nzd-portrait.webp";
+import usd from "@/assets/usd-portrait.webp";
+import redEnvelope from "@/assets/red-envelope-portrait.svg";
 import Konva from "konva";
 
 function getImage(src: string): Promise<HTMLImageElement> {
@@ -131,7 +141,15 @@ async function createImageStack(
   });
 }
 
-async function drawStack(container: HTMLDivElement, imageSrc: string) {
+async function drawStack(
+  container: HTMLDivElement,
+  imageSrc: string,
+  existingStage: null | Konva.Stage = null
+): Promise<Konva.Stage> {
+  if (existingStage) {
+    existingStage.destroy();
+  }
+
   const stage = new Konva.Stage({
     container,
     width: container.scrollWidth,
@@ -143,6 +161,8 @@ async function drawStack(container: HTMLDivElement, imageSrc: string) {
   layer.add(...imageStack);
   stage.add(layer);
   stage.add(debugLayer);
+
+  return stage;
 }
 
 export default defineComponent({
@@ -150,7 +170,7 @@ export default defineComponent({
   components: {},
   props: {
     type: {
-      type: String as PropType<"cny" | "red-envelope">,
+      type: String as PropType<"cny" | "usd" | "nzd" | "gbp" | "red-envelope">,
       required: true,
     },
   },
@@ -158,14 +178,28 @@ export default defineComponent({
     const src = computed(
       () =>
         ({
-          cny: cnyFrontPortrait,
+          cny,
+          usd,
+          gbp,
+          nzd,
           "red-envelope": redEnvelope,
         }[props.type])
     );
     const root = ref<HTMLDivElement | null>(null);
 
-    onMounted(() => {
-      drawStack(root.value as HTMLDivElement, src.value);
+    onMounted(async () => {
+      let stage: null | Konva.Stage = null;
+      watch(
+        src,
+        async () => {
+          stage = await drawStack(
+            root.value as HTMLDivElement,
+            src.value,
+            stage
+          );
+        },
+        { immediate: true }
+      );
     });
 
     return {
