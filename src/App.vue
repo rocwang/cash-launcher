@@ -19,13 +19,13 @@ export default defineComponent({
 <style src="./assets/reset.css" />
 <style module>
 :root {
-  --color-black: #ddd;
-  --color-white: #333;
+  --color-white: #ddd;
+  --color-black: #333;
 }
 
 body {
-  background-color: var(--color-white);
-  color: var(--color-black);
+  background-color: var(--color-black);
+  color: var(--color-white);
   font-family: system-ui, sans-serif;
   height: 100%;
   overflow: hidden;

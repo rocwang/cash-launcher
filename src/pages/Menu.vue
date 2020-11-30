@@ -1,13 +1,27 @@
 <template>
   <ul :class="$style.root">
     <li
-      v-for="(item, i) in items"
-      :key="item.src"
+      v-for="(item, i) in imageTypes"
+      :key="item"
       :class="$style.item"
-      :style="{ zIndex: items.length - i }"
+      :style="{ zIndex: imageTypes.length - i }"
     >
-      <router-link :to="item.to" :class="$style.link">
-        <img :src="item.src" alt="Banknote or red envelopes" :class="$style.image"/>
+      <router-link
+        :to="`/stack/${item}`"
+        :class="$style.link"
+        custom
+        v-slot="{ href, navigate }"
+      >
+        <a
+          :href="href"
+          @click="requestDeviceOrientationBeforeNavigate($event, navigate)"
+        >
+          <img
+            :src="type2LandscapeImageUrl(item)"
+            alt="Banknote or red envelopes"
+            :class="$style.image"
+          />
+        </a>
       </router-link>
     </li>
   </ul>
@@ -15,40 +29,38 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import cny from "@/assets/cny-landscape.webp";
-import gbp from "@/assets/gbp-landscape.webp";
-import nzd from "@/assets/nzd-landscape.webp";
-import usd from "@/assets/usd-landscape.webp";
-import redEnvelope from "@/assets/red-envelope-landscape.svg";
+import { NavigationFailure } from "vue-router";
+import { requestDeviceOrientation } from "@/deviceOrientation.ts";
+import { ImageType, type2LandscapeImageUrl } from "@/images.ts";
 
 export default defineComponent({
   name: "Menu",
   setup() {
-    const items = [
-      {
-        src: usd,
-        to : "/stack/usd",
-      },
-      {
-        src: nzd,
-        to : "/stack/nzd",
-      },
-      {
-        src: cny,
-        to: "/stack/cny",
-      },
-      {
-        src: gbp,
-        to : "/stack/gbp",
-      },
-      {
-        src: redEnvelope,
-        to: "/stack/red-envelope",
-      },
+    const imageTypes: ImageType[] = [
+      "usd",
+      "nzd",
+      "cny",
+      "gbp",
+      "red-envelope",
     ];
 
+    async function requestDeviceOrientationBeforeNavigate(
+      event: MouseEvent,
+      navigate: (e?: MouseEvent) => Promise<void | NavigationFailure>
+    ) {
+      event.preventDefault();
+
+      if (await requestDeviceOrientation()) {
+        await navigate();
+      } else {
+        alert("This app can't work without device orientation data.");
+      }
+    }
+
     return {
-      items,
+      imageTypes,
+      type2LandscapeImageUrl,
+      requestDeviceOrientationBeforeNavigate,
     };
   },
 });
