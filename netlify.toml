@@ -30,7 +30,7 @@ force = false
 
 # Redirect default Netlify subdomain to primary domain
 [[redirects]]
-from = "https://cash-launcher.netlify.com/*"
+from = "https://cash-launcher.netlify.app/*"
 to = "https://cash.kiwiberry.nz/:splat"
 status = 301
 force = true
