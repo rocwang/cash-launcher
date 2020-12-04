@@ -1,11 +1,22 @@
 import Konva from "konva";
-import { onMounted, onUnmounted, ref, Ref, watch } from "vue";
+import { onMounted, onUnmounted, ref, Ref, watchEffect } from "vue";
+import { fromEventPattern, merge, Subscription } from "rxjs";
+import { filter, scan, share, withLatestFrom } from "rxjs/operators";
+
+declare interface PaperState {
+  t: number;
+  y: number;
+  v: number;
+}
 
 export function useStack(
   src: Ref,
   containerRef: Ref<HTMLDivElement | null>
 ): Ref<number> {
+  const velocityRef = ref<number>(0);
   let stage: null | Konva.Stage = null;
+  let subscription: null | Subscription = null;
+
   onMounted(async () => {
     const container = containerRef.value as HTMLDivElement;
     stage = new Konva.Stage({
@@ -13,29 +24,101 @@ export function useStack(
       width: container.scrollWidth,
       height: container.scrollHeight,
     });
+
     const layer = new Konva.Layer();
+    subscription = bindEvents(layer, stage, velocityRef);
+
     stage.add(layer);
 
-    watch(
-      src,
-      async () => {
-        layer.destroyChildren();
-        const imageStack = await createImageStack(
-          stage as Konva.Stage,
-          src.value
-        );
-        layer.add(...imageStack);
-        layer.draw();
-      },
-      { immediate: true }
-    );
+    watchEffect(async () => {
+      layer.destroyChildren();
+      const imageStack = await createImageStack(
+        stage as Konva.Stage,
+        src.value
+      );
+      layer.add(...imageStack);
+      layer.draw();
+    });
   });
-  onUnmounted(() => stage && stage.destroy());
+
+  onUnmounted(() => {
+    subscription && subscription.unsubscribe();
+    stage && stage.destroy();
+  });
 
   return velocityRef;
 }
 
-const velocityRef = ref<number>(0);
+function bindEvents(
+  layer: Konva.Layer,
+  stage: Konva.Stage,
+  velocityRef: Ref<number>
+): Subscription {
+  const state$ = merge(
+    fromEventPattern(
+      (handler) => layer.on("dragstart", handler),
+      (handler) => layer.off("dragstart", handler)
+    ),
+    fromEventPattern(
+      (handler) => layer.on("dragmove", handler),
+      (handler) => layer.off("dragmove", handler)
+    )
+  )
+    .pipe(
+      scan(
+        (last: PaperState, e: unknown) => {
+          const t = performance.now();
+          const y = (e as Konva.KonvaEventObject<DragEvent>).target.y();
+
+          const v = t === 0 ? 0 : (y - last.y) / (t - last.t);
+
+          return { t, y, v };
+        },
+        { t: 0, y: 0, v: 0 }
+      )
+    )
+    .pipe(share());
+
+  const velocity$ = fromEventPattern(
+    (handler) => layer.on("dragend", handler),
+    (handler) => layer.off("dragend", handler)
+  )
+    .pipe(
+      withLatestFrom(state$, (e: unknown, state) => ({
+        e: e as Konva.KonvaEventObject<DragEvent>,
+        state,
+      }))
+    )
+    // The image must have a large enough upward speed to fly out
+    .pipe(filter(({ state }) => state.v < -1));
+
+  return velocity$.subscribe(({ state, e }) => {
+    // Update velocity ref for Vue
+    velocityRef.value = state.v;
+
+    const target = e.target as Konva.Image;
+
+    target.draggable(false);
+    target.listening(false);
+
+    const targetY = -stage.height() * 1.2;
+    const distance = targetY - target.y();
+    const duration = distance / state.v / 1000;
+
+    target.to({
+      x: target.x(),
+      y: targetY,
+      duration,
+      easing: Konva.Easings.Linear,
+      onFinish: () => {
+        target.setAttrs({
+          ...createInitialImageConfig(stage),
+          zIndex: 0,
+        });
+      },
+    });
+  });
+}
 
 function getImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve) => {
@@ -90,52 +173,6 @@ async function createImageStack(
 
   return new Array(n).fill(null).map(() => {
     const clone = image.clone(createInitialImageConfig(stage)) as Konva.Image;
-
-    let justNow: number;
-    let lastY: number;
-    let velocity: number;
-
-    clone.on("dragstart", (e) => {
-      justNow = performance.now();
-      lastY = e.target.y();
-    });
-    clone.on("dragmove", (e) => {
-      const now = performance.now();
-      const y = e.target.y();
-
-      velocity = (y - lastY) / (now - justNow);
-
-      justNow = now;
-      lastY = y;
-    });
-    clone.on("dragend", () => {
-      velocityRef.value = velocity;
-
-      // The image must have a large enough upward speed to fly out
-      if (velocity > -1) {
-        return;
-      }
-
-      clone.draggable(false);
-      clone.listening(false);
-
-      const targetY = -stage.height() * 1.2;
-      const distance = targetY - clone.y();
-      const duration = distance / velocity / 1000;
-
-      clone.to({
-        x: clone.x(),
-        y: targetY,
-        duration,
-        easing: Konva.Easings.Linear,
-        onFinish: () => {
-          clone.setAttrs({
-            ...createInitialImageConfig(stage),
-            zIndex: 0,
-          });
-        },
-      });
-    });
 
     clone.cache();
 
