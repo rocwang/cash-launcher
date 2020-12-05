@@ -24,13 +24,15 @@
 <script lang="ts">
 import { computed, defineComponent, PropType, ref } from "vue";
 import Compass from "@/components/Compass.vue";
-import { useStack } from "@/stack.ts";
+import { makeStack } from "@/stack.ts";
 import {
-  useDeviceOrientation,
+  getDeviceOrientationSubject,
   isDeviceOrientationGranted,
   requestDeviceOrientation,
 } from "@/deviceOrientation.ts";
 import { type2PortraitImageUrl, ImageType } from "@/images.ts";
+import { behaviorSubjectToRef } from "@/utilities";
+import { pipeToPi } from "@/socket.ts";
 
 export default defineComponent({
   name: "Stack",
@@ -44,14 +46,20 @@ export default defineComponent({
   setup(props) {
     const src = computed(() => type2PortraitImageUrl(props.type));
     const root = ref<HTMLDivElement | null>(null);
-    const velocity = useStack(src, root);
-    const orientation = useDeviceOrientation();
+
+    const velocitySubject = makeStack(src, root);
+    const velocity = behaviorSubjectToRef(velocitySubject);
+
+    const orientationSubject = getDeviceOrientationSubject();
+    const orientation = behaviorSubjectToRef(orientationSubject);
 
     async function requestDeviceOrientationOrAlert() {
       if (!(await requestDeviceOrientation())) {
         alert("This app can't work without device orientation data.");
       }
     }
+
+    pipeToPi(velocitySubject, orientationSubject);
 
     return {
       src,

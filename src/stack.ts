@@ -1,32 +1,32 @@
 import Konva from "konva";
-import { onMounted, onUnmounted, ref, Ref, watchEffect } from "vue";
-import { fromEventPattern, merge, Subscription } from "rxjs";
-import { filter, scan, share, withLatestFrom } from "rxjs/operators";
+import { onMounted, onUnmounted, Ref, watchEffect } from "vue";
+import { BehaviorSubject, fromEventPattern, merge, Observable } from "rxjs";
+import { filter, map, scan, share, tap, withLatestFrom } from "rxjs/operators";
 
-declare interface PaperState {
+interface PaperState {
   t: number;
   y: number;
   v: number;
 }
 
-export function useStack(
+export function makeStack(
   src: Ref,
   containerRef: Ref<HTMLDivElement | null>
-): Ref<number> {
-  const velocityRef = ref<number>(0);
-  let stage: null | Konva.Stage = null;
-  let subscription: null | Subscription = null;
+): BehaviorSubject<number> {
+  const velocitySubject = new BehaviorSubject<number>(0);
 
   onMounted(async () => {
     const container = containerRef.value as HTMLDivElement;
-    stage = new Konva.Stage({
+    const stage = new Konva.Stage({
       container,
       width: container.scrollWidth,
       height: container.scrollHeight,
     });
 
     const layer = new Konva.Layer();
-    subscription = bindEvents(layer, stage, velocityRef);
+
+    const velocity$ = getVelocity$FromDrag(layer, stage);
+    const subscription = velocity$.subscribe(velocitySubject);
 
     stage.add(layer);
 
@@ -39,21 +39,20 @@ export function useStack(
       layer.add(...imageStack);
       layer.draw();
     });
+
+    onUnmounted(() => {
+      subscription.unsubscribe();
+      stage.destroy();
+    });
   });
 
-  onUnmounted(() => {
-    subscription && subscription.unsubscribe();
-    stage && stage.destroy();
-  });
-
-  return velocityRef;
+  return velocitySubject;
 }
 
-function bindEvents(
+function getVelocity$FromDrag(
   layer: Konva.Layer,
-  stage: Konva.Stage,
-  velocityRef: Ref<number>
-): Subscription {
+  stage: Konva.Stage
+): Observable<number> {
   const state$ = merge(
     fromEventPattern(
       (handler) => layer.on("dragstart", handler),
@@ -63,61 +62,56 @@ function bindEvents(
       (handler) => layer.on("dragmove", handler),
       (handler) => layer.off("dragmove", handler)
     )
-  )
-    .pipe(
-      scan(
-        (last: PaperState, e: unknown) => {
-          const t = performance.now();
-          const y = (e as Konva.KonvaEventObject<DragEvent>).target.y();
+  ).pipe(
+    scan(
+      (last: PaperState, e: unknown) => {
+        const t = performance.now();
+        const y = (e as Konva.KonvaEventObject<DragEvent>).target.y();
 
-          const v = t === 0 ? 0 : (y - last.y) / (t - last.t);
+        const v = t === 0 ? 0 : (y - last.y) / (t - last.t);
 
-          return { t, y, v };
-        },
-        { t: 0, y: 0, v: 0 }
-      )
+        return { t, y, v };
+      },
+      { t: 0, y: 0, v: 0 }
     )
-    .pipe(share());
+  );
 
-  const velocity$ = fromEventPattern(
+  return fromEventPattern(
     (handler) => layer.on("dragend", handler),
     (handler) => layer.off("dragend", handler)
-  )
-    .pipe(
-      withLatestFrom(state$, (e: unknown, state) => ({
-        e: e as Konva.KonvaEventObject<DragEvent>,
-        state,
-      }))
-    )
+  ).pipe(
+    withLatestFrom(state$, (e: unknown, state) => ({
+      e: e as Konva.KonvaEventObject<DragEvent>,
+      state,
+    })),
     // The image must have a large enough upward speed to fly out
-    .pipe(filter(({ state }) => state.v < -1));
+    filter(({ state }) => state.v < -1),
+    tap(({ state, e }) => {
+      const target = e.target as Konva.Image;
 
-  return velocity$.subscribe(({ state, e }) => {
-    // Update velocity ref for Vue
-    velocityRef.value = state.v;
+      target.draggable(false);
+      target.listening(false);
 
-    const target = e.target as Konva.Image;
+      const targetY = -stage.height() * 1.2;
+      const distance = targetY - target.y();
+      const duration = distance / state.v / 1000;
 
-    target.draggable(false);
-    target.listening(false);
-
-    const targetY = -stage.height() * 1.2;
-    const distance = targetY - target.y();
-    const duration = distance / state.v / 1000;
-
-    target.to({
-      x: target.x(),
-      y: targetY,
-      duration,
-      easing: Konva.Easings.Linear,
-      onFinish: () => {
-        target.setAttrs({
-          ...createInitialImageConfig(stage),
-          zIndex: 0,
-        });
-      },
-    });
-  });
+      target.to({
+        x: target.x(),
+        y: targetY,
+        duration,
+        easing: Konva.Easings.Linear,
+        onFinish: () => {
+          target.setAttrs({
+            ...createInitialImageConfig(stage),
+            zIndex: 0,
+          });
+        },
+      });
+    }),
+    map(({ state }) => state.v),
+    share()
+  );
 }
 
 function getImage(src: string): Promise<HTMLImageElement> {

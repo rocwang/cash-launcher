@@ -1,13 +1,17 @@
-import { onMounted, onUnmounted, reactive, ref } from "vue";
+import { onUnmounted, readonly, ref } from "vue";
+import { BehaviorSubject, fromEvent } from "rxjs";
+import { map, share, take } from "rxjs/operators";
 
-const orientation = reactive<{ alpha: number | null; beta: number | null }>({
-  alpha: 0,
-  beta: 0,
-});
+export interface DeviceOrientation {
+  alpha: number | null;
+  beta: number | null;
+}
 
-export const isDeviceOrientationGranted = ref<boolean>(
+const _isDeviceOrientationGranted = ref<boolean>(
   typeof DeviceOrientationEvent.requestPermission !== "function"
 );
+
+export const isDeviceOrientationGranted = readonly(_isDeviceOrientationGranted);
 
 export async function requestDeviceOrientation(): Promise<boolean> {
   if (typeof DeviceOrientationEvent.requestPermission !== "function") {
@@ -15,41 +19,38 @@ export async function requestDeviceOrientation(): Promise<boolean> {
   }
 
   const response = await DeviceOrientationEvent.requestPermission();
-  if (response === "granted") {
-    isDeviceOrientationGranted.value = true;
-    return true;
-  } else {
-    return false;
-  }
+  _isDeviceOrientationGranted.value = response === "granted";
+
+  return _isDeviceOrientationGranted.value;
 }
 
-function onDeviceOrientation(e: DeviceOrientationEvent) {
-  orientation.alpha = e.alpha;
-  orientation.beta = e.beta;
-}
-
-function checkDeviceOrientationGranted() {
-  isDeviceOrientationGranted.value = true;
-}
-
-export function useDeviceOrientation() {
-  onMounted(() => {
-    window.addEventListener("deviceorientation", onDeviceOrientation);
-    window.addEventListener(
-      "deviceorientation",
-      checkDeviceOrientationGranted,
-      {
-        once: true,
-      }
-    );
+export function getDeviceOrientationSubject(): BehaviorSubject<DeviceOrientation> {
+  const deviceOrientationSubject = new BehaviorSubject<DeviceOrientation>({
+    alpha: 0,
+    beta: 0,
   });
+
+  const deviceOrientation$ = fromEvent<DeviceOrientationEvent>(
+    window,
+    "deviceorientation"
+  ).pipe(
+    map(({ alpha, beta }) => ({
+      alpha,
+      beta,
+    })),
+    share()
+  );
+
+  const sub1 = deviceOrientation$.pipe(take(1)).subscribe(() => {
+    _isDeviceOrientationGranted.value = true;
+  });
+
+  const sub2 = deviceOrientation$.subscribe(deviceOrientationSubject);
+
   onUnmounted(() => {
-    window.removeEventListener("deviceorientation", onDeviceOrientation);
-    window.removeEventListener(
-      "deviceorientation",
-      checkDeviceOrientationGranted
-    );
+    sub1.unsubscribe();
+    sub2.unsubscribe();
   });
 
-  return orientation;
+  return deviceOrientationSubject;
 }
