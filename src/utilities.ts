@@ -1,4 +1,4 @@
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Subject } from "rxjs";
 import { onUnmounted, ref, Ref, readonly } from "vue";
 import { DeepReadonly, UnwrapRef } from "@vue/reactivity";
 
@@ -13,4 +13,10 @@ export function behaviorSubjectToRef<T>(
   onUnmounted(() => subscription.unsubscribe());
 
   return readonly(reference);
+}
+
+export function EventSubjectToEventHandler(s: Subject<Event>) {
+  return (e: Event) => {
+    s.next(e);
+  };
 }
