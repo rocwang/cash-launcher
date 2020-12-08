@@ -1,19 +1,14 @@
 import { onUnmounted } from "vue";
 import { BehaviorSubject, fromEvent } from "rxjs";
 import { map, share, take } from "rxjs/operators";
-import { behaviorSubjectToRef } from "@/utilities";
 
 export interface DeviceOrientation {
   alpha: number | null;
   beta: number | null;
 }
 
-const deviceOrientationGrantedSubject = new BehaviorSubject(
+export const deviceOrientationGrantedSubject = new BehaviorSubject(
   typeof DeviceOrientationEvent.requestPermission !== "function"
-);
-
-export const isDeviceOrientationGranted = behaviorSubjectToRef(
-  deviceOrientationGrantedSubject
 );
 
 export async function requestDeviceOrientation(): Promise<boolean> {

@@ -10,6 +10,7 @@ export function behaviorSubjectToRef<T>(
   const subscription = s.subscribe((v: T) => {
     reference.value = v as UnwrapRef<T>;
   });
+
   onUnmounted(() => subscription.unsubscribe());
 
   return readonly(reference);

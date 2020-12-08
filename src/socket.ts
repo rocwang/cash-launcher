@@ -1,37 +1,42 @@
 import { onUnmounted } from "vue";
-import { BehaviorSubject, merge } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { DeviceOrientation } from "@/deviceOrientation";
 import { webSocket } from "rxjs/webSocket";
-import { map } from "rxjs/operators";
 
 export function pipeToPi(
   velocity: BehaviorSubject<number>,
   orientation: BehaviorSubject<DeviceOrientation>
 ) {
-  const socketSubject = webSocket("wss://localhost:7777");
+  const registry = [
+    {
+      url: "wss://localhost/velocity",
+      subject: velocity as BehaviorSubject<unknown>,
+    },
+    {
+      url: "wss://localhost/orientation",
+      subject: orientation as BehaviorSubject<unknown>,
+    },
+  ].map(({ url, subject }) => {
+    const socket = webSocket(url);
 
-  merge(
-    velocity.pipe(
-      map((velocity) => ({
-        velocity,
-      }))
-    ),
-    orientation.pipe(
-      map((orientation) => ({
-        orientation,
-      }))
-    )
-  ).subscribe(socketSubject);
+    subject.subscribe(socket);
 
-  const subscription = socketSubject.subscribe(
-    () => {},
-    (error) => {
-      console.log(error);
-    }
-  );
+    const subscription = socket.subscribe(
+      () => {},
+      (error) => console.log(error),
+      () => console.log("Server closed the connection")
+    );
+
+    return {
+      socket,
+      subscription,
+    };
+  });
 
   onUnmounted(() => {
-    socketSubject.error({ code: 1000, reason: "Stack.vue is unmounted" });
-    subscription.unsubscribe();
+    registry.forEach(({ socket, subscription }) => {
+      socket.error({ code: 1000, reason: "Stack.vue is unmounted" });
+      subscription.unsubscribe();
+    });
   });
 }

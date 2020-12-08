@@ -27,7 +27,7 @@ import Compass from "@/components/Compass.vue";
 import { makeStack } from "@/stack.ts";
 import {
   getDeviceOrientationSubject,
-  isDeviceOrientationGranted,
+  deviceOrientationGrantedSubject,
   requestDeviceOrientation,
 } from "@/deviceOrientation.ts";
 import { type2PortraitImageUrl, ImageType } from "@/images.ts";
@@ -52,6 +52,9 @@ export default defineComponent({
 
     const orientationSubject = getDeviceOrientationSubject();
     const orientation = behaviorSubjectToRef(orientationSubject);
+    const isDeviceOrientationGranted = behaviorSubjectToRef(
+      deviceOrientationGrantedSubject
+    );
 
     async function requestDeviceOrientationOrAlert() {
       if (!(await requestDeviceOrientation())) {
