@@ -9,11 +9,11 @@ export function pipeToPi(
 ) {
   const registry = [
     {
-      url: `wss://${process.env.VUE_APP_SERVER_HOST}/velocity`,
+      url: `wss://${import.meta.env.VITE_SERVER_HOST}/velocity`,
       subject: velocity as BehaviorSubject<unknown>,
     },
     {
-      url: `wss://${process.env.VUE_APP_SERVER_HOST}/orientation`,
+      url: `wss://${import.meta.env.VITE_SERVER_HOST}/orientation`,
       subject: orientation as BehaviorSubject<unknown>,
     },
   ].map(({ url, subject }) => {

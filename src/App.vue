@@ -26,7 +26,6 @@ export default defineComponent({
 body {
   background-color: var(--color-black);
   color: var(--color-white);
-  font-family: system-ui, sans-serif;
   height: 100%;
   overflow: hidden;
 }
