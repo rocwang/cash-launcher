@@ -86,6 +86,6 @@ export default defineComponent({
 .link {
   display: block;
   overflow: hidden;
-  box-shadow: #000000 3px 3px 4px;
+  box-shadow: #444 0 -3px 4px;
 }
 </style>
