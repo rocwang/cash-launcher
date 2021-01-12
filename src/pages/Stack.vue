@@ -23,16 +23,16 @@
 
 <script lang="ts">
 import { computed, defineComponent, PropType, ref } from "vue";
-import Compass from "@/components/Compass.vue";
-import { makeStack } from "@/stack.ts";
+import Compass from "../components/Compass.vue";
+import { makeStack } from "../stack";
 import {
   getDeviceOrientationSubject,
   deviceOrientationGrantedSubject,
   requestDeviceOrientation,
-} from "@/deviceOrientation.ts";
-import { type2PortraitImageUrl, ImageType } from "@/images.ts";
-import { behaviorSubjectToRef } from "@/utilities";
-import { pipeToPi } from "@/socket.ts";
+} from "../deviceOrientation";
+import { type2PortraitImageUrl, ImageType } from "../images";
+import { behaviorSubjectToRef } from "../utilities";
+import { pipeToPi } from "../socket";
 
 export default defineComponent({
   name: "Stack",

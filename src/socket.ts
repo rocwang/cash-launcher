@@ -1,6 +1,6 @@
 import { onUnmounted } from "vue";
 import { BehaviorSubject } from "rxjs";
-import { DeviceOrientation } from "@/deviceOrientation";
+import { DeviceOrientation } from "./deviceOrientation";
 import { webSocket } from "rxjs/webSocket";
 
 export function pipeToPi(

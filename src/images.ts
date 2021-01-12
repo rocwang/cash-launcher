@@ -1,16 +1,16 @@
-import usdLandscape from "@/assets/usd-landscape.webp";
-import nzd100Landscape from "@/assets/nzd-100-landscape.webp";
-import nzd5Landscape from "@/assets/nzd-5-landscape.webp";
-import cnyLandscape from "@/assets/cny-landscape.webp";
-import gbpLandscape from "@/assets/gbp-landscape.webp";
-import redEnvelopeLandscape from "@/assets/red-envelope-landscape.svg";
+import usdLandscape from "./assets/usd-landscape.webp";
+import nzd100Landscape from "./assets/nzd-100-landscape.webp";
+import nzd5Landscape from "./assets/nzd-5-landscape.webp";
+import cnyLandscape from "./assets/cny-landscape.webp";
+import gbpLandscape from "./assets/gbp-landscape.webp";
+import redEnvelopeLandscape from "./assets/red-envelope-landscape.svg";
 
-import cnyPortrait from "@/assets/cny-portrait.webp";
-import gbpPortrait from "@/assets/gbp-portrait.webp";
-import nzd100Portrait from "@/assets/nzd-100-portrait.webp";
-import nzd5Portrait from "@/assets/nzd-5-portrait.webp";
-import usdPortrait from "@/assets/usd-portrait.webp";
-import redEnvelopePortrait from "@/assets/red-envelope-portrait.svg";
+import cnyPortrait from "./assets/cny-portrait.webp";
+import gbpPortrait from "./assets/gbp-portrait.webp";
+import nzd100Portrait from "./assets/nzd-100-portrait.webp";
+import nzd5Portrait from "./assets/nzd-5-portrait.webp";
+import usdPortrait from "./assets/usd-portrait.webp";
+import redEnvelopePortrait from "./assets/red-envelope-portrait.svg";
 
 export type ImageType =
   | "cny"

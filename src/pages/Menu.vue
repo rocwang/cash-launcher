@@ -9,7 +9,6 @@
       <router-link
         :to="`/stack/${item}`"
         :class="$style.link"
-        custom
         v-slot="{ href, navigate }"
       >
         <a
@@ -30,8 +29,8 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { NavigationFailure } from "vue-router";
-import { requestDeviceOrientation } from "@/deviceOrientation.ts";
-import { ImageType, type2LandscapeImageUrl } from "@/images.ts";
+import { requestDeviceOrientation } from "../deviceOrientation";
+import { ImageType, type2LandscapeImageUrl } from "../images";
 
 export default defineComponent({
   name: "Menu",

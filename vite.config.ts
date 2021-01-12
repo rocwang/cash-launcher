@@ -19,5 +19,4 @@ export default defineConfig({
     exclude: ["prettier"],
     include: ["rxjs/operators", "rxjs/webSocket"],
   },
-  alias: [{ find: /^@\//, replacement: "/src/" }],
 });
