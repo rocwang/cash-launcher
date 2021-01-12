@@ -4,7 +4,7 @@
       v-for="(item, i) in imageTypes"
       :key="item"
       :class="$style.item"
-      :style="{ zIndex: imageTypes.length - i }"
+      :style="{ zIndex: i }"
     >
       <router-link
         :to="`/stack/${item}`"
@@ -39,6 +39,7 @@ export default defineComponent({
     const imageTypes: ImageType[] = [
       "usd",
       "nzd",
+      "nzd5",
       "cny",
       "gbp",
       "red-envelope",
@@ -70,7 +71,7 @@ export default defineComponent({
 .root {
   display: grid;
   grid-template-columns: 100%;
-  grid-auto-rows: 20%;
+  grid-auto-rows: calc(100% / 6);
   place-items: stretch;
   width: 50vh;
   min-width: 414px;
