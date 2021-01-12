@@ -38,7 +38,7 @@ export default defineComponent({
   setup() {
     const imageTypes: ImageType[] = [
       "usd",
-      "nzd",
+      "nzd100",
       "nzd5",
       "cny",
       "gbp",
