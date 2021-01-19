@@ -1,7 +1,7 @@
 {
   "name": "cash-launcher",
   "version": "1.0.0",
-  "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "lint": "vuedx-typecheck .",
@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "konva": "^7.2.0",
-    "prettier": "^2.2.1",
     "rxjs": "^6.6.3",
     "vue": "^3.0.5",
     "vue-router": "^4.0.2"
